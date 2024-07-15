@@ -23,6 +23,10 @@ jobs:
         with:
           toolchain: ${{matrix.toolchain}}
       - uses: Swatinem/rust-cache@v2
+      - name: Test with no features
+        run: cargo test --no-default-features
+      - name: Test with default features
+        run: cargo test
       - name: Test with all features
         run: cargo test --all-features
 
