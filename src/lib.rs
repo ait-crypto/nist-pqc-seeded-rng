@@ -22,6 +22,8 @@ type Aes256Ctr = ctr::Ctr128BE<aes::Aes256>;
 /// Warning: Do not use this RNG anywhere else. Its only use is to generate the
 /// responses for the known answer tests for schemes submitted to the NIST PQC
 /// competition.
+#[derive(Debug)]
+#[cfg_attr(feature = "zeroize", derive(zeroize::ZeroizeOnDrop))]
 pub struct NistPqcAes256CtrRng {
     key: GenericArray<u8, U32>,
     v: GenericArray<u8, U16>,
@@ -77,14 +79,6 @@ impl RngCore for NistPqcAes256CtrRng {
 }
 
 impl CryptoRng for NistPqcAes256CtrRng {}
-
-#[cfg(feature = "zeroize")]
-impl zeroize::Zeroize for NistPqcAes256CtrRng {
-    fn zeroize(&mut self) {
-        self.key.zeroize();
-        self.v.zeroize();
-    }
-}
 
 #[cfg(test)]
 mod test {
