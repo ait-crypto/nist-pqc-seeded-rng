@@ -9,7 +9,7 @@
 
 use aes::cipher::{
     generic_array::{
-        typenum::{U16, U32, U48},
+        typenum::{Unsigned, U16, U32},
         GenericArray,
     },
     KeyIvInit, StreamCipher, StreamCipherSeek,
@@ -17,6 +17,10 @@ use aes::cipher::{
 use rand_core::{CryptoRng, RngCore, SeedableRng};
 
 type Aes256Ctr = ctr::Ctr128BE<aes::Aes256>;
+type KeyLength = U32;
+type VLength = U16;
+type SeedLength = <U32 as core::ops::Add<VLength>>::Output;
+type Seed = GenericArray<u8, SeedLength>;
 
 /// RNG used to generate known answer test values for NIST PQC competition
 ///
@@ -27,22 +31,22 @@ type Aes256Ctr = ctr::Ctr128BE<aes::Aes256>;
 #[cfg_attr(feature = "zeroize", derive(zeroize::ZeroizeOnDrop))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct NistPqcAes256CtrRng {
-    key: GenericArray<u8, U32>,
-    v: GenericArray<u8, U16>,
+    key: GenericArray<u8, KeyLength>,
+    v: GenericArray<u8, VLength>,
 }
 
 impl SeedableRng for NistPqcAes256CtrRng {
-    type Seed = GenericArray<u8, U48>;
+    type Seed = Seed;
 
     fn from_seed(mut seed: Self::Seed) -> Self {
-        let mut cipher = Aes256Ctr::new(&[0; 32].into(), &[0; 16].into());
+        let mut cipher = Aes256Ctr::new(&GenericArray::default(), &GenericArray::default());
         cipher.seek(16);
         cipher.apply_keystream(&mut seed);
 
         let key_v = seed.as_slice();
         Self {
-            key: *GenericArray::from_slice(&key_v[..32]),
-            v: *GenericArray::from_slice(&key_v[32..]),
+            key: *GenericArray::from_slice(&key_v[..KeyLength::USIZE]),
+            v: *GenericArray::from_slice(&key_v[KeyLength::USIZE..]),
         }
     }
 }
@@ -64,7 +68,10 @@ impl RngCore for NistPqcAes256CtrRng {
         let mut cipher = Aes256Ctr::new(&self.key, &self.v);
         cipher.seek(16);
         cipher.apply_keystream(dest);
-        cipher.seek((cipher.current_pos::<usize>() + 15) / 16 * 16);
+        cipher.seek(
+            (cipher.current_pos::<usize>() + (VLength::USIZE - 1)) / VLength::USIZE
+                * VLength::USIZE,
+        );
 
         let mut key = GenericArray::default();
         let mut v = GenericArray::default();
@@ -87,7 +94,7 @@ mod test {
     use aes::cipher::generic_array::GenericArray;
     use rand_core::{RngCore, SeedableRng};
 
-    use crate::NistPqcAes256CtrRng;
+    use super::*;
 
     #[test]
     fn test_all_zeros() {
