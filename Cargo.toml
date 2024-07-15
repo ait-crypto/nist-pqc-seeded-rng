@@ -1,10 +1,13 @@
 [package]
 name = "nist-pqc-seeded-rng"
+description = "Implementation of the RNG used to produce the KATs in NIST PQC competition"
 author = ["Sebastian Ramacher <sebastian.ramacher@ait.ac.at>"]
 license = "MIT"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.70"
+categories = ["cryptography"]
+keywords = ["rng", "NIST", "PQC"]
 
 [dependencies]
 aes = { version = "0.8.4", default-features = false }
