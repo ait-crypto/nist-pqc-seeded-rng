@@ -5,6 +5,7 @@
 //! tests from an initial seed.
 
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
+#![deny(missing_docs)]
 
 use aes::cipher::{
     generic_array::{
