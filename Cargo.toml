@@ -24,5 +24,9 @@ generic-array = { version = "0.14", default-features = false }
 [features]
 std = ["ctr/std"]
 zeroize = ["dep:zeroize", "ctr/zeroize", "aes/zeroize", "generic-array/zeroize"]
-default = ["std"]
+default = ["std", "serde", "zeroize"]
 serde = ["dep:serde", "generic-array/serde"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
