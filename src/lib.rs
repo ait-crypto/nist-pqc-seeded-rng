@@ -25,6 +25,7 @@ type Aes256Ctr = ctr::Ctr128BE<aes::Aes256>;
 /// competition.
 #[derive(Debug)]
 #[cfg_attr(feature = "zeroize", derive(zeroize::ZeroizeOnDrop))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct NistPqcAes256CtrRng {
     key: GenericArray<u8, U32>,
     v: GenericArray<u8, U16>,
