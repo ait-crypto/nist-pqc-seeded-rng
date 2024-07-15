@@ -1,4 +1,4 @@
-//! NIST PQC: RNG for known answer tests
+//! # NIST PQC: RNG for known answer tests
 //!
 //! This crate provides a seedable RNG that produces outputs compatible with
 //! `rng.c` used by submissions to the NIST PQC project to obtain known answer
@@ -22,7 +22,7 @@ type Aes256Ctr = ctr::Ctr128BE<aes::Aes256>;
 /// Warning: Do not use this RNG anywhere else. Its only use is to generate the
 /// responses for the known answer tests for schemes submitted to the NIST PQC
 /// competition.
-struct NistPqcAes256CtrRng {
+pub struct NistPqcAes256CtrRng {
     key: GenericArray<u8, U32>,
     v: GenericArray<u8, U16>,
 }
