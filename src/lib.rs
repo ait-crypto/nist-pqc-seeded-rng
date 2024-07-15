@@ -22,7 +22,7 @@ use rand_core::{CryptoRng, RngCore, SeedableRng};
 type Aes256Ctr = ctr::Ctr128BE<aes::Aes256>;
 type KeyLength = U32;
 type VLength = U16;
-type SeedLength = <U32 as core::ops::Add<VLength>>::Output;
+type SeedLength = <KeyLength as core::ops::Add<VLength>>::Output;
 type Seed = GenericArray<u8, SeedLength>;
 
 /// RNG used to generate known answer test values for NIST PQC competition
