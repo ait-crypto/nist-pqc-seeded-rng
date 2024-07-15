@@ -4,6 +4,7 @@ author = ["Sebastian Ramacher <sebastian.ramacher@ait.ac.at>"]
 license = "MIT"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.70"
 
 [dependencies]
 aes = { version = "0.8.4", default-features = false }
