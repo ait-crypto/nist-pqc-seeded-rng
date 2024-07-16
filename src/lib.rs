@@ -1,15 +1,18 @@
-//! # NIST PQC: RNG for known answer tests
-//!
-//! This crate provides a seedable RNG that produces outputs compatible with
-//! [`rng.c`] used by submissions to the NIST [PQC] project to obtain known answer
-//! tests from an initial seed.
-//!
-//! [PQC]: https://csrc.nist.gov/projects/post-quantum-cryptography/
-//! [`rng.c`]: https://csrc.nist.gov/csrc/media/Projects/post-quantum-cryptography/documents/example-files/source-code-files-for-kats.zip
-
-#![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
+#![no_std]
+#![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #![deny(missing_docs)]
+#![doc = include_str!("../README.md")]
 
+//! ## Usage
+//!
+//! The RNG can be instantiated from a 48 byte seed using various options:
+//! first with [SeedableRng::from_seed] as defined in the interface of seedable
+//! API. To avoid the user to handle the conversion to [GenericArray] which is
+//! used to represent a seed, convenience implementations of [From] for a `u8`
+//! array with 48 elements as well as [TryFrom] for a `[u8]` slice is provided.
+//!
+
+pub use aes::cipher::generic_array;
 use aes::cipher::{
     generic_array::{
         typenum::{Unsigned, U16, U32},
@@ -17,13 +20,14 @@ use aes::cipher::{
     },
     KeyIvInit, StreamCipher, StreamCipherSeek,
 };
-use rand_core::{CryptoRng, RngCore, SeedableRng};
+pub use rand_core::{CryptoRng, RngCore, SeedableRng};
 
 type Aes256Ctr = ctr::Ctr128BE<aes::Aes256>;
 type KeyLength = U32;
 type VLength = U16;
 type SeedLength = <KeyLength as core::ops::Add<VLength>>::Output;
-type Seed = GenericArray<u8, SeedLength>;
+/// Represents a seed
+pub type Seed = GenericArray<u8, SeedLength>;
 
 /// RNG used to generate known answer test values for NIST PQC competition
 ///
@@ -50,6 +54,24 @@ impl SeedableRng for NistPqcAes256CtrRng {
         Self {
             key: *GenericArray::from_slice(&key_v[..KeyLength::USIZE]),
             v: *GenericArray::from_slice(&key_v[KeyLength::USIZE..]),
+        }
+    }
+}
+
+impl From<[u8; 48]> for NistPqcAes256CtrRng {
+    fn from(value: [u8; SeedLength::USIZE]) -> Self {
+        Self::from_seed(value.into())
+    }
+}
+
+impl TryFrom<&[u8]> for NistPqcAes256CtrRng {
+    type Error = ();
+
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        if value.len() == SeedLength::USIZE {
+            Ok(Self::from_seed(*GenericArray::from_slice(value)))
+        } else {
+            Err(())
         }
     }
 }
