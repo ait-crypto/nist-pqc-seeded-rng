@@ -11,6 +11,30 @@
 //! used to represent a seed, convenience implementations of [From] for a `u8`
 //! array with 48 elements as well as [TryFrom] for a `[u8]` slice is provided.
 //!
+//! The following three examples are functionally equivalent. Let us start with
+//! initializing from [Seed]:
+//! ```
+//! use nist_pqc_seeded_rng::{NistPqcAes256CtrRng, Seed, SeedableRng};
+//!
+//! let seed: Seed = (*b"012345678901234567890123456789012345678901234567").into();
+//! let rng = NistPqcAes256CtrRng::from_seed(seed);
+//! ```
+//!
+//! Using a `u8` array:
+//! ```
+//! use nist_pqc_seeded_rng::{NistPqcAes256CtrRng, Seed, SeedableRng};
+//!
+//! let seed: [u8; 48] = *b"012345678901234567890123456789012345678901234567";
+//! let rng = NistPqcAes256CtrRng::from(seed);
+//! ```
+//!
+//! Using a slice:
+//! ```
+//! use nist_pqc_seeded_rng::{NistPqcAes256CtrRng, Seed, SeedableRng};
+//!
+//! let seed = *b"012345678901234567890123456789012345678901234567";
+//! let rng = NistPqcAes256CtrRng::try_from(seed).expect("seed of invalid length");
+//! ```
 
 pub use aes::cipher::generic_array;
 use aes::cipher::{
@@ -183,5 +207,21 @@ mod test {
         let mut buf = [0; 4];
         rng.fill_bytes(&mut buf);
         assert_eq!(buf, [0xf9, 0xc1, 0x29, 0x94]);
+    }
+
+    #[test]
+    fn from() {
+        let mut rng = NistPqcAes256CtrRng::from_seed(GenericArray::default());
+        let mut seed = [0; SeedLength::USIZE];
+        rng.fill_bytes(&mut seed);
+
+        let rng = NistPqcAes256CtrRng::from_seed(seed.into());
+        let rng_1 = NistPqcAes256CtrRng::from(seed);
+        let rng_2 = NistPqcAes256CtrRng::try_from(seed.as_slice()).expect("seed of invalid length");
+
+        assert_eq!(rng.key, rng_1.key);
+        assert_eq!(rng.key, rng_2.key);
+        assert_eq!(rng.v, rng_1.v);
+        assert_eq!(rng.v, rng_2.v);
     }
 }
