@@ -19,6 +19,7 @@ zeroize = { version = "1.4", optional = true, default-features = false, features
 serde = { version = "1", optional = true, default-features = false, features = [
   "derive",
 ] }
+# needs to be compatible with aes and ctr; required to enable serde and zeroize features
 generic-array = { version = "0.14", default-features = false }
 
 [features]
