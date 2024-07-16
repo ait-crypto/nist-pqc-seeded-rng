@@ -3,6 +3,7 @@ name = "nist-pqc-seeded-rng"
 description = "Implementation of the RNG used to produce the KATs in NIST PQC competition"
 authors = ["Sebastian Ramacher <sebastian.ramacher@ait.ac.at>"]
 license = "Apache-2.0 OR MIT"
+repository = "https://github.com/ait-crypto/nist-pqc-seeded-rng"
 version = "0.1.2"
 edition = "2021"
 rust-version = "1.70"
