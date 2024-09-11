@@ -62,8 +62,8 @@ pub type Seed = GenericArray<u8, SeedLength>;
 #[cfg_attr(feature = "zeroize", derive(zeroize::ZeroizeOnDrop))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct NistPqcAes256CtrRng {
-    key: GenericArray<u8, KeyLength>,
-    v: GenericArray<u8, VLength>,
+    key: [u8; KeyLength::USIZE],
+    v: [u8; VLength::USIZE],
 }
 
 impl SeedableRng for NistPqcAes256CtrRng {
@@ -74,11 +74,11 @@ impl SeedableRng for NistPqcAes256CtrRng {
         cipher.seek(16);
         cipher.apply_keystream(&mut seed);
 
-        let key_v = seed.as_slice();
-        Self {
-            key: *GenericArray::from_slice(&key_v[..KeyLength::USIZE]),
-            v: *GenericArray::from_slice(&key_v[KeyLength::USIZE..]),
-        }
+        let mut key = [0; KeyLength::USIZE];
+        let mut v = [0; VLength::USIZE];
+        key.copy_from_slice(&seed[..KeyLength::USIZE]);
+        v.copy_from_slice(&seed[KeyLength::USIZE..]);
+        Self { key, v }
     }
 }
 
@@ -114,7 +114,10 @@ impl RngCore for NistPqcAes256CtrRng {
     }
 
     fn fill_bytes(&mut self, dest: &mut [u8]) {
-        let mut cipher = Aes256Ctr::new(&self.key, &self.v);
+        let mut cipher = Aes256Ctr::new(
+            GenericArray::from_slice(&self.key),
+            GenericArray::from_slice(&self.v),
+        );
         cipher.seek(16);
         cipher.apply_keystream(dest);
         cipher.seek(
@@ -122,8 +125,8 @@ impl RngCore for NistPqcAes256CtrRng {
                 * VLength::USIZE,
         );
 
-        let mut key = GenericArray::default();
-        let mut v = GenericArray::default();
+        let mut key = [0; KeyLength::USIZE];
+        let mut v = [0; VLength::USIZE];
         cipher.apply_keystream(&mut key);
         cipher.apply_keystream(&mut v);
         self.key = key;
@@ -155,7 +158,6 @@ mod test {
                 0x73, 0x8b, 0xce, 0xa7, 0x40, 0x3d, 0x4d, 0x60, 0x6b, 0x6e, 0x07, 0x4e, 0xc5, 0xd3,
                 0xba, 0xf3, 0x9d, 0x18,
             ]
-            .into()
         );
         let mut buf = [0; 8];
         rng.fill_bytes(&mut buf);
@@ -167,7 +169,6 @@ mod test {
                 0x68, 0x0b, 0xaf, 0x44, 0x43, 0x92, 0x2a, 0x11, 0x91, 0x78, 0xfb, 0x81, 0x91, 0xd4,
                 0xc9, 0xd0, 0xa5, 0x8f,
             ]
-            .into()
         );
         let mut buf = [0; 4];
         rng.fill_bytes(&mut buf);
@@ -184,7 +185,6 @@ mod test {
                 0x73, 0x8b, 0xce, 0xa7, 0x40, 0x3d, 0x4d, 0x60, 0x6b, 0x6e, 0x07, 0x4e, 0xc5, 0xd3,
                 0xba, 0xf3, 0x9d, 0x18,
             ]
-            .into()
         );
         let mut buf = [0; 16];
         rng.fill_bytes(&mut buf);
@@ -202,7 +202,6 @@ mod test {
                 0x68, 0x0b, 0xaf, 0x44, 0x43, 0x92, 0x2a, 0x11, 0x91, 0x78, 0xfb, 0x81, 0x91, 0xd4,
                 0xc9, 0xd0, 0xa5, 0x8f,
             ]
-            .into()
         );
         let mut buf = [0; 4];
         rng.fill_bytes(&mut buf);
