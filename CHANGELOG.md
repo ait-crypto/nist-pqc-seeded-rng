@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3 (2024-09-12)
+
+* Refactor to remove direct dependency on `generic-array`.
+
 ## 0.1.2 (2024-07-16)
 
 * Provide convenience `TryFrom` and `From` implementation for byte slices and byte arrays.
