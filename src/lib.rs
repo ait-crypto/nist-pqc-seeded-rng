@@ -36,22 +36,70 @@
 //! let rng = NistPqcAes256CtrRng::try_from(seed).expect("seed of invalid length");
 //! ```
 
-pub use aes::cipher::generic_array;
-use aes::cipher::{
-    generic_array::{
-        typenum::{Unsigned, U16, U32},
-        GenericArray,
-    },
-    KeyIvInit, StreamCipher, StreamCipherSeek,
-};
+use core::{ops::Index, slice::SliceIndex};
+
+use aes::cipher::{generic_array::GenericArray, KeyIvInit, StreamCipher, StreamCipherSeek};
 pub use rand_core::{CryptoRng, RngCore, SeedableRng};
 
 type Aes256Ctr = ctr::Ctr128BE<aes::Aes256>;
-type KeyLength = U32;
-type VLength = U16;
-type SeedLength = <KeyLength as core::ops::Add<VLength>>::Output;
-/// Represents a seed
-pub type Seed = GenericArray<u8, SeedLength>;
+
+const KEY_LENGTH: usize = 32;
+const V_LENGTH: usize = 16;
+const SEED_LENGTH: usize = KEY_LENGTH + V_LENGTH;
+
+/// Represents a seed which consists of 48 bytes.
+#[derive(Debug)]
+#[cfg_attr(feature = "zeroize", derive(zeroize::ZeroizeOnDrop))]
+pub struct Seed([u8; SEED_LENGTH]);
+
+impl Default for Seed {
+    fn default() -> Self {
+        Self([0u8; SEED_LENGTH])
+    }
+}
+
+impl AsRef<[u8]> for Seed {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
+    }
+}
+
+impl AsMut<[u8]> for Seed {
+    fn as_mut(&mut self) -> &mut [u8] {
+        &mut self.0
+    }
+}
+
+impl<Idx> Index<Idx> for Seed
+where
+    Idx: SliceIndex<[u8]>,
+{
+    type Output = Idx::Output;
+
+    fn index(&self, index: Idx) -> &Self::Output {
+        &self.0[index]
+    }
+}
+
+impl From<[u8; SEED_LENGTH]> for Seed {
+    fn from(value: [u8; SEED_LENGTH]) -> Self {
+        Self(value)
+    }
+}
+
+impl TryFrom<&[u8]> for Seed {
+    type Error = ();
+
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        if value.len() == SEED_LENGTH {
+            let mut buf = [0; SEED_LENGTH];
+            buf.copy_from_slice(value);
+            Ok(Self(buf))
+        } else {
+            Err(())
+        }
+    }
+}
 
 /// RNG used to generate known answer test values for NIST PQC competition
 ///
@@ -62,8 +110,8 @@ pub type Seed = GenericArray<u8, SeedLength>;
 #[cfg_attr(feature = "zeroize", derive(zeroize::ZeroizeOnDrop))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct NistPqcAes256CtrRng {
-    key: [u8; KeyLength::USIZE],
-    v: [u8; VLength::USIZE],
+    key: [u8; KEY_LENGTH],
+    v: [u8; V_LENGTH],
 }
 
 impl SeedableRng for NistPqcAes256CtrRng {
@@ -72,19 +120,25 @@ impl SeedableRng for NistPqcAes256CtrRng {
     fn from_seed(mut seed: Self::Seed) -> Self {
         let mut cipher = Aes256Ctr::new(&GenericArray::default(), &GenericArray::default());
         cipher.seek(16);
-        cipher.apply_keystream(&mut seed);
+        cipher.apply_keystream(seed.as_mut());
 
-        let mut key = [0; KeyLength::USIZE];
-        let mut v = [0; VLength::USIZE];
-        key.copy_from_slice(&seed[..KeyLength::USIZE]);
-        v.copy_from_slice(&seed[KeyLength::USIZE..]);
+        let mut key = [0; KEY_LENGTH];
+        let mut v = [0; V_LENGTH];
+        key.copy_from_slice(&seed[..KEY_LENGTH]);
+        v.copy_from_slice(&seed[KEY_LENGTH..]);
         Self { key, v }
     }
 }
 
-impl From<[u8; 48]> for NistPqcAes256CtrRng {
-    fn from(value: [u8; SeedLength::USIZE]) -> Self {
+impl From<[u8; SEED_LENGTH]> for NistPqcAes256CtrRng {
+    fn from(value: [u8; SEED_LENGTH]) -> Self {
         Self::from_seed(value.into())
+    }
+}
+
+impl From<&[u8; SEED_LENGTH]> for NistPqcAes256CtrRng {
+    fn from(value: &[u8; SEED_LENGTH]) -> Self {
+        Self::from(*value)
     }
 }
 
@@ -92,11 +146,7 @@ impl TryFrom<&[u8]> for NistPqcAes256CtrRng {
     type Error = ();
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-        if value.len() == SeedLength::USIZE {
-            Ok(Self::from_seed(*GenericArray::from_slice(value)))
-        } else {
-            Err(())
-        }
+        Seed::try_from(value).map(Self::from_seed)
     }
 }
 
@@ -120,13 +170,10 @@ impl RngCore for NistPqcAes256CtrRng {
         );
         cipher.seek(16);
         cipher.apply_keystream(dest);
-        cipher.seek(
-            (cipher.current_pos::<usize>() + (VLength::USIZE - 1)) / VLength::USIZE
-                * VLength::USIZE,
-        );
+        cipher.seek((cipher.current_pos::<usize>() + (V_LENGTH - 1)) / V_LENGTH * V_LENGTH);
 
-        let mut key = [0; KeyLength::USIZE];
-        let mut v = [0; VLength::USIZE];
+        let mut key = [0; KEY_LENGTH];
+        let mut v = [0; V_LENGTH];
         cipher.apply_keystream(&mut key);
         cipher.apply_keystream(&mut v);
         self.key = key;
@@ -143,14 +190,13 @@ impl CryptoRng for NistPqcAes256CtrRng {}
 
 #[cfg(test)]
 mod test {
-    use aes::cipher::generic_array::GenericArray;
     use rand_core::{RngCore, SeedableRng};
 
     use super::*;
 
     #[test]
     fn test_all_zeros() {
-        let mut rng = NistPqcAes256CtrRng::from_seed(GenericArray::default());
+        let mut rng = NistPqcAes256CtrRng::from_seed(Seed::default());
         assert_eq!(
             rng.key,
             [
@@ -177,7 +223,7 @@ mod test {
 
     #[test]
     fn test_all_zeros_2() {
-        let mut rng = NistPqcAes256CtrRng::from_seed(GenericArray::default());
+        let mut rng = NistPqcAes256CtrRng::from_seed(Seed::default());
         assert_eq!(
             rng.key,
             [
@@ -210,8 +256,8 @@ mod test {
 
     #[test]
     fn from() {
-        let mut rng = NistPqcAes256CtrRng::from_seed(GenericArray::default());
-        let mut seed = [0; SeedLength::USIZE];
+        let mut rng = NistPqcAes256CtrRng::from_seed(Seed::default());
+        let mut seed = [0; SEED_LENGTH];
         rng.fill_bytes(&mut seed);
 
         let rng = NistPqcAes256CtrRng::from_seed(seed.into());
