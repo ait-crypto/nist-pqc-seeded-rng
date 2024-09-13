@@ -32,7 +32,7 @@
 //! ```
 //! use nist_pqc_seeded_rng::{NistPqcAes256CtrRng, Seed, SeedableRng};
 //!
-//! let seed = *b"012345678901234567890123456789012345678901234567";
+//! let seed = b"012345678901234567890123456789012345678901234567".as_slice();
 //! let rng = NistPqcAes256CtrRng::try_from(seed).expect("seed of invalid length");
 //! ```
 
