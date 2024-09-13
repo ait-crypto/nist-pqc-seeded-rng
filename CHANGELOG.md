@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2 (2024-09-13)
+
+* Reimplement `Seed` without `generic-array`.
+
 ## 0.1.3 (2024-09-12)
 
 * Refactor to remove direct dependency on `generic-array`.
