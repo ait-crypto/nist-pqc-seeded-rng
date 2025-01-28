@@ -48,7 +48,7 @@ const V_LENGTH: usize = 16;
 const SEED_LENGTH: usize = KEY_LENGTH + V_LENGTH;
 
 /// Represents a seed which consists of 48 bytes.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "zeroize", derive(zeroize::ZeroizeOnDrop))]
 pub struct Seed([u8; SEED_LENGTH]);
 
@@ -178,11 +178,6 @@ impl RngCore for NistPqcAes256CtrRng {
         cipher.apply_keystream(&mut v);
         self.key = key;
         self.v = v;
-    }
-
-    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand_core::Error> {
-        self.fill_bytes(dest);
-        Ok(())
     }
 }
 
