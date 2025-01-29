@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3 (2025-01-29)
+
+* Upgrade to `rand_core` version 0.9.
+
 ## 0.2 (2024-09-13)
 
 * Reimplement `Seed` without `generic-array`.
