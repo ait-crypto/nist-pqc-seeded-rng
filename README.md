@@ -16,6 +16,6 @@ This crate has received no security audit. Use at your own risk.
 This crate requires Rust 1.70 at a minimum. The MSRV may be changed in the
 future, but this change will be accompanied by a minor version bump.
 
-### License
+## License
 
 This crate is licensed under the Apache-2.0 or MIT license.
