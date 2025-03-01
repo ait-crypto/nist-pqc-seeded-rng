@@ -38,7 +38,7 @@
 
 use core::{ops::Index, slice::SliceIndex};
 
-use aes::cipher::{generic_array::GenericArray, KeyIvInit, StreamCipher, StreamCipherSeek};
+use aes::cipher::{KeyIvInit, StreamCipher, StreamCipherSeek, generic_array::GenericArray};
 pub use rand_core::{CryptoRng, RngCore, SeedableRng};
 
 type Aes256Ctr = ctr::Ctr128BE<aes::Aes256>;
