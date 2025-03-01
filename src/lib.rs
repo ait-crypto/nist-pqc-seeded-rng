@@ -170,7 +170,7 @@ impl RngCore for NistPqcAes256CtrRng {
         );
         cipher.seek(16);
         cipher.apply_keystream(dest);
-        cipher.seek((cipher.current_pos::<usize>() + (V_LENGTH - 1)) / V_LENGTH * V_LENGTH);
+        cipher.seek(cipher.current_pos::<usize>().div_ceil(V_LENGTH) * V_LENGTH);
 
         let mut key = [0; KEY_LENGTH];
         let mut v = [0; V_LENGTH];
