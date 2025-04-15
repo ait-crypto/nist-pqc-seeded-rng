@@ -169,7 +169,11 @@ impl RngCore for NistPqcAes256CtrRng {
             GenericArray::from_slice(&self.v),
         );
         cipher.seek(16);
-        cipher.apply_keystream(dest);
+        for chunk in dest.chunks_mut(16) {
+            let mut buffer = [0; 16];
+            cipher.apply_keystream(&mut buffer);
+            chunk.copy_from_slice(&buffer[..chunk.len()]);
+        }
         cipher.seek((cipher.current_pos::<usize>() + (V_LENGTH - 1)) / V_LENGTH * V_LENGTH);
 
         let mut key = [0; KEY_LENGTH];
@@ -252,6 +256,26 @@ mod test {
         let mut buf = [0; 4];
         rng.fill_bytes(&mut buf);
         assert_eq!(buf, [0xf9, 0xc1, 0x29, 0x94]);
+    }
+
+    #[test]
+    fn test_specific_seed() {
+        let seed = [
+            100, 51, 91, 242, 158, 93, 230, 40, 66, 201, 65, 118, 107, 161, 41, 176, 100, 59, 94,
+            113, 33, 202, 38, 207, 193, 144, 236, 125, 195, 84, 56, 48, 85, 127, 221, 92, 3, 207,
+            18, 58, 69, 109, 72, 239, 234, 67, 200, 104,
+        ];
+        let mut rng = NistPqcAes256CtrRng::from_seed(seed.into());
+        let mut buf = [1; 2 * 16];
+        rng.fill_bytes(&mut buf[0..16]);
+        rng.fill_bytes(&mut buf[16..32]);
+        assert_eq!(
+            buf,
+            [
+                75, 98, 45, 225, 53, 1, 25, 196, 90, 159, 46, 46, 243, 220, 93, 245, 106, 39, 252,
+                223, 205, 218, 245, 140, 214, 155, 144, 55, 82, 214, 140, 32,
+            ]
+        );
     }
 
     #[test]
