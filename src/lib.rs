@@ -176,12 +176,10 @@ impl RngCore for NistPqcAes256CtrRng {
         }
         cipher.seek(cipher.current_pos::<usize>().div_ceil(V_LENGTH) * V_LENGTH);
 
-        let mut key = [0; KEY_LENGTH];
-        let mut v = [0; V_LENGTH];
-        cipher.apply_keystream(&mut key);
-        cipher.apply_keystream(&mut v);
-        self.key = key;
-        self.v = v;
+        self.key.fill(0);
+        self.v.fill(0);
+        cipher.apply_keystream(&mut self.key);
+        cipher.apply_keystream(&mut self.v);
     }
 }
 
