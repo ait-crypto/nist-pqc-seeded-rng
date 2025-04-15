@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1 (2025-04-15)
+
+* Fix generation if destination buffer is not zeroized.
+
 ## 0.2 (2024-09-13)
 
 * Reimplement `Seed` without `generic-array`.
