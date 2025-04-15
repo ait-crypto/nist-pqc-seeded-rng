@@ -13,8 +13,7 @@ This crate has received no security audit. Use at your own risk.
 
 ## Minimum Supported Rust Version
 
-This crate requires Rust 1.70 at a minimum. The MSRV may be changed in the
-future, but this change will be accompanied by a minor version bump.
+This crate requires Rust 1.85 at a minimum.
 
 ## License
 
