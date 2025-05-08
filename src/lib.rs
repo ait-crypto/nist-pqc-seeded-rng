@@ -38,7 +38,9 @@
 
 use core::{ops::Index, slice::SliceIndex};
 
-use aes::cipher::{KeyIvInit, StreamCipher, StreamCipherSeek, generic_array::GenericArray};
+use aes::cipher::{
+    KeyIvInit, StreamCipher, StreamCipherSeek, generic_array::GenericArray, inout::InOutBuf,
+};
 pub use rand_core::{CryptoRng, RngCore, SeedableRng};
 
 type Aes256Ctr = ctr::Ctr128BE<aes::Aes256>;
@@ -169,17 +171,24 @@ impl RngCore for NistPqcAes256CtrRng {
             GenericArray::from_slice(&self.v),
         );
         cipher.seek(16);
-        for chunk in dest.chunks_mut(16) {
-            let mut buffer = [0; 16];
-            cipher.apply_keystream(&mut buffer);
-            chunk.copy_from_slice(&buffer[..chunk.len()]);
+
+        let buffer_16 = [0; 16];
+        let mut iter = dest.chunks_exact_mut(16);
+        for chunk in iter.by_ref() {
+            cipher.apply_keystream_inout(InOutBuf::new(&buffer_16, chunk).unwrap());
         }
+        let remainder = iter.into_remainder();
+        if !remainder.is_empty() {
+            cipher.apply_keystream_inout(
+                InOutBuf::new(&buffer_16[..remainder.len()], remainder).unwrap(),
+            );
+        }
+
         cipher.seek(cipher.current_pos::<usize>().div_ceil(V_LENGTH) * V_LENGTH);
 
-        self.key.fill(0);
-        self.v.fill(0);
-        cipher.apply_keystream(&mut self.key);
-        cipher.apply_keystream(&mut self.v);
+        let buffer_32 = [0; 32];
+        cipher.apply_keystream_inout(InOutBuf::new(&buffer_32, &mut self.key).unwrap());
+        cipher.apply_keystream_inout(InOutBuf::new(&buffer_16, &mut self.v).unwrap());
     }
 }
 
