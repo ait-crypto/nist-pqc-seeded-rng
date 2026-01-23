@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.2 (2026-01-23)
+
+* Re-export `rand_core`.
+* Internal refactoring.
+
 ## 0.3.1 (2025-04-15)
 
 * Bump edition to 2024.
