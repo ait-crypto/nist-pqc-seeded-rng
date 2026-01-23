@@ -172,23 +172,22 @@ impl RngCore for NistPqcAes256CtrRng {
         );
         cipher.seek(16);
 
-        let buffer_16 = [0; 16];
+        const BUFFER: [u8; 32] = [0; 32];
         let mut iter = dest.chunks_exact_mut(16);
         for chunk in iter.by_ref() {
-            cipher.apply_keystream_inout(InOutBuf::new(&buffer_16, chunk).unwrap());
+            cipher.apply_keystream_inout(InOutBuf::new(&BUFFER[..16], chunk).unwrap());
         }
         let remainder = iter.into_remainder();
         if !remainder.is_empty() {
             cipher.apply_keystream_inout(
-                InOutBuf::new(&buffer_16[..remainder.len()], remainder).unwrap(),
+                InOutBuf::new(&BUFFER[..remainder.len()], remainder).unwrap(),
             );
         }
 
         cipher.seek(cipher.current_pos::<usize>().div_ceil(V_LENGTH) * V_LENGTH);
 
-        let buffer_32 = [0; 32];
-        cipher.apply_keystream_inout(InOutBuf::new(&buffer_32, &mut self.key).unwrap());
-        cipher.apply_keystream_inout(InOutBuf::new(&buffer_16, &mut self.v).unwrap());
+        cipher.apply_keystream_inout(InOutBuf::new(&BUFFER, &mut self.key).unwrap());
+        cipher.apply_keystream_inout(InOutBuf::new(&BUFFER[..16], &mut self.v).unwrap());
     }
 }
 
