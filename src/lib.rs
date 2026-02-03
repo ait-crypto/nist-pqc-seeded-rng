@@ -36,12 +36,13 @@
 //! let rng = NistPqcAes256CtrRng::try_from(seed).expect("seed of invalid length");
 //! ```
 
-use core::{ops::Index, slice::SliceIndex};
+use core::{convert::Infallible, ops::Index, slice::SliceIndex};
 
 use aes::cipher::{
     KeyIvInit, StreamCipher, StreamCipherSeek, generic_array::GenericArray, inout::InOutBuf,
 };
-pub use rand_core::{self, CryptoRng, RngCore, SeedableRng};
+pub use rand_core::{self, CryptoRng, Rng, SeedableRng};
+use rand_core::{TryCryptoRng, TryRng};
 
 type Aes256Ctr = ctr::Ctr128BE<aes::Aes256>;
 
@@ -152,20 +153,22 @@ impl TryFrom<&[u8]> for NistPqcAes256CtrRng {
     }
 }
 
-impl RngCore for NistPqcAes256CtrRng {
-    fn next_u32(&mut self) -> u32 {
+impl TryRng for NistPqcAes256CtrRng {
+    type Error = Infallible;
+
+    fn try_next_u32(&mut self) -> Result<u32, Self::Error> {
         let mut buf = [0; 4];
         self.fill_bytes(&mut buf);
-        u32::from_le_bytes(buf)
+        Ok(u32::from_le_bytes(buf))
     }
 
-    fn next_u64(&mut self) -> u64 {
+    fn try_next_u64(&mut self) -> Result<u64, Self::Error> {
         let mut buf = [0; 8];
         self.fill_bytes(&mut buf);
-        u64::from_le_bytes(buf)
+        Ok(u64::from_le_bytes(buf))
     }
 
-    fn fill_bytes(&mut self, dest: &mut [u8]) {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Self::Error> {
         let mut cipher = Aes256Ctr::new(
             GenericArray::from_slice(&self.key),
             GenericArray::from_slice(&self.v),
@@ -173,7 +176,7 @@ impl RngCore for NistPqcAes256CtrRng {
         cipher.seek(16);
 
         const BUFFER: [u8; 32] = [0; 32];
-        let mut iter = dest.chunks_exact_mut(16);
+        let mut iter = dst.chunks_exact_mut(16);
         for chunk in iter.by_ref() {
             cipher.apply_keystream_inout(InOutBuf::new(&BUFFER[..16], chunk).unwrap());
         }
@@ -188,14 +191,16 @@ impl RngCore for NistPqcAes256CtrRng {
 
         cipher.apply_keystream_inout(InOutBuf::new(&BUFFER, &mut self.key).unwrap());
         cipher.apply_keystream_inout(InOutBuf::new(&BUFFER[..16], &mut self.v).unwrap());
+
+        Ok(())
     }
 }
 
-impl CryptoRng for NistPqcAes256CtrRng {}
+impl TryCryptoRng for NistPqcAes256CtrRng {}
 
 #[cfg(test)]
 mod test {
-    use rand_core::{RngCore, SeedableRng};
+    use rand_core::SeedableRng;
 
     use super::*;
 
