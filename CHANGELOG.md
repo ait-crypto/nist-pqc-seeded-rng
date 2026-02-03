@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4 (2026-02-03)
+
+* Upgrade to `rand_core` version 0.10.
+
 ## 0.3.2 (2026-01-23)
 
 * Re-export `rand_core`.
