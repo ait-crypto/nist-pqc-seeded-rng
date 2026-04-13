@@ -38,9 +38,7 @@
 
 use core::{convert::Infallible, ops::Index, slice::SliceIndex};
 
-use aes::cipher::{
-    KeyIvInit, StreamCipher, StreamCipherSeek, generic_array::GenericArray, inout::InOutBuf,
-};
+use aes::cipher::{Array, KeyIvInit, StreamCipher, StreamCipherSeek, inout::InOutBuf};
 pub use rand_core::{self, CryptoRng, Rng, SeedableRng};
 use rand_core::{TryCryptoRng, TryRng};
 
@@ -121,7 +119,7 @@ impl SeedableRng for NistPqcAes256CtrRng {
     type Seed = Seed;
 
     fn from_seed(mut seed: Self::Seed) -> Self {
-        let mut cipher = Aes256Ctr::new(&GenericArray::default(), &GenericArray::default());
+        let mut cipher = Aes256Ctr::new(&Array::default(), &Array::default());
         cipher.seek(16);
         cipher.apply_keystream(seed.as_mut());
 
@@ -169,10 +167,7 @@ impl TryRng for NistPqcAes256CtrRng {
     }
 
     fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Self::Error> {
-        let mut cipher = Aes256Ctr::new(
-            GenericArray::from_slice(&self.key),
-            GenericArray::from_slice(&self.v),
-        );
+        let mut cipher = Aes256Ctr::new(&Array::from(self.key), &Array::from(self.v));
         cipher.seek(16);
 
         const BUFFER: [u8; 32] = [0; 32];

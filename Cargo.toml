@@ -11,8 +11,8 @@ categories = ["cryptography", "no-std"]
 keywords = ["rng", "NIST", "PQC"]
 
 [dependencies]
-aes = { version = "0.8", default-features = false }
-ctr = { version = "0.9", default-features = false }
+aes = { version = "0.9", default-features = false }
+ctr = { version = "0.10", default-features = false }
 rand_core = { version = "0.10", default-features = false }
 zeroize = { version = "1.4", optional = true, default-features = false, features = [
   "derive",
@@ -22,7 +22,7 @@ serde = { version = "1", optional = true, default-features = false, features = [
 ] }
 
 [features]
-std = ["ctr/std"]
+std = ["ctr/alloc"]
 zeroize = ["dep:zeroize", "ctr/zeroize", "aes/zeroize"]
 default = ["std", "serde", "zeroize"]
 serde = ["dep:serde"]
