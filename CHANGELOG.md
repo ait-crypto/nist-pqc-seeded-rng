@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.3 (2026-04-13)
+
+* Bump edition to 2024 as required by `aes` and `ctr`.
+
 ## 0.2.2 (2026-04-13)
 
 * Update `aes` to version 0.9.
