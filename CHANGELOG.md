@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.2 (2026-04-13)
+
+* Update `aes` to version 0.9.
+* Update `ctr` to version 0.10.
+
 ## 0.2.1 (2025-04-15)
 
 * Fix generation if destination buffer is not zeroized.
