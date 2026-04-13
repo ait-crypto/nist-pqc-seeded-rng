@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1 (2026-04-13)
+
+* Upgrade to `aes` version 0.9.
+* Upgrade to `ctr` version 0.10.
+
 ## 0.4 (2026-02-03)
 
 * Upgrade to `rand_core` version 0.10.
