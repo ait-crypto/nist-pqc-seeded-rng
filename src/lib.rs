@@ -38,7 +38,7 @@
 
 use core::{ops::Index, slice::SliceIndex};
 
-use aes::cipher::{generic_array::GenericArray, KeyIvInit, StreamCipher, StreamCipherSeek};
+use aes::cipher::{Array, KeyIvInit, StreamCipher, StreamCipherSeek};
 pub use rand_core::{CryptoRng, RngCore, SeedableRng};
 
 type Aes256Ctr = ctr::Ctr128BE<aes::Aes256>;
@@ -118,7 +118,7 @@ impl SeedableRng for NistPqcAes256CtrRng {
     type Seed = Seed;
 
     fn from_seed(mut seed: Self::Seed) -> Self {
-        let mut cipher = Aes256Ctr::new(&GenericArray::default(), &GenericArray::default());
+        let mut cipher = Aes256Ctr::new(&Array::default(), &Array::default());
         cipher.seek(16);
         cipher.apply_keystream(seed.as_mut());
 
@@ -164,10 +164,7 @@ impl RngCore for NistPqcAes256CtrRng {
     }
 
     fn fill_bytes(&mut self, dest: &mut [u8]) {
-        let mut cipher = Aes256Ctr::new(
-            GenericArray::from_slice(&self.key),
-            GenericArray::from_slice(&self.v),
-        );
+        let mut cipher = Aes256Ctr::new(&Array::from(self.key), &Array::from(self.v));
         cipher.seek(16);
         for chunk in dest.chunks_mut(16) {
             let mut buffer = [0; 16];
