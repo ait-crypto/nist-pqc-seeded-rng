@@ -13,7 +13,7 @@ jobs:
       matrix:
         toolchain:
           - stable
-          - "1.85"
+          - "1.96"
     name: Test with ${{matrix.toolchain}} toolchain
     steps:
       - uses: actions/checkout@v6

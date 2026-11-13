@@ -13,7 +13,7 @@ This crate has received no security audit. Use at your own risk.
 
 ## Minimum Supported Rust Version
 
-This crate requires Rust 1.85 at a minimum.
+This crate requires Rust 1.96 at a minimum.
 
 ## License
 

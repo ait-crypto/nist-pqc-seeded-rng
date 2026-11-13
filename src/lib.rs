@@ -171,11 +171,10 @@ impl TryRng for NistPqcAes256CtrRng {
         cipher.seek(16);
 
         const BUFFER: [u8; 32] = [0; 32];
-        let mut iter = dst.chunks_exact_mut(16);
-        for chunk in iter.by_ref() {
+        let (chunks, remainder) = dst.as_chunks_mut::<16>();
+        for chunk in chunks {
             cipher.apply_keystream_inout(InOutBuf::new(&BUFFER[..16], chunk).unwrap());
         }
-        let remainder = iter.into_remainder();
         if !remainder.is_empty() {
             cipher.apply_keystream_inout(
                 InOutBuf::new(&BUFFER[..remainder.len()], remainder).unwrap(),
