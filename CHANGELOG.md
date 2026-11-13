@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.2 (2026-11-13)
+
+* Bump MSRV to 1.96.
+  - Enables upgrades to newer versions of `aes`.
+  - Replace `chunks_exact_mut` with `as_chunks_mut`.
+
 ## 0.4.1 (2026-04-13)
 
 * Upgrade to `aes` version 0.9.
